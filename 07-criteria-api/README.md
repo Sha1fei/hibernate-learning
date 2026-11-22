@@ -1,0 +1,11 @@
+## Criteria API
+-   ```CriteriaBuilder``` (фабрика для построения запросов, условий и выражений программно) - получение: `session.getCriteriaBuilder()` или `em.getCriteriaBuilder()`; создаёт `CriteriaQuery`, `Predicate`, `Expression`
+-   ```CriteriaQuery<User>``` (типобезопасный объект запроса, аналог HQL, но через Java API) - `cb.createQuery(User.class)`; определяет `SELECT`, `FROM`, `WHERE`, `ORDER BY`, `GROUP BY`
+-   ```Root<User>``` (корневая сущность запроса, от которой строятся пути к полям) - `query.from(User.class)`; `root.get("name")` — доступ к полю; `root.join("orders")` — JOIN
+-   ```Predicate``` (условие WHERE, комбинируемое через AND/OR) - `cb.equal(root.get("name"), "John")`; `cb.and(p1, p2)`; `cb.or(p1, p2)`; `cb.between()`, `cb.like()`, `cb.isNull()`
+-   ```Metamodel (SingularAttribute, PluralAttribute)``` (статически типизированный доступ к полям сущности, безопасный при рефакторинге) - генерируется через annotation processor; `User_.name` вместо `"name"`; ошибки ловятся на этапе компиляции
+-   ```query.select(root).where(predicate).orderBy(cb.asc(root.get("name")))``` (полное построение запроса с условиями и сортировкой) - цепочка вызовов; финальный запрос: `session.createQuery(query).getResultList()`
+-   ```Subquery<T>``` (вложенный подзапрос внутри основного Criteria-запроса) - `query.subquery(Long.class)`; используется для `EXISTS`, `IN`, агрегаций в условиях
+-   ```cb.construct(UserDTO.class, root.get("name"), root.get("email"))``` (проекция результата в DTO через конструктор) - аналог `SELECT NEW` в HQL; возвращает не сущность, а DTO
+-   ```Specification<User>``` (Spring Data интерфейс для переиспользуемых и комбинируемых условий) - `Specification.where(hasName("John")).and(olderThan(18))`; передаётся в `JpaSpecificationExecutor.findAll(spec)`
+-   ```JpaSpecificationExecutor<User>``` (Spring Data интерфейс репозитория с поддержкой Specification) - `findAll(Specification, Pageable)` — комбинация динамических фильтров с пагинацией

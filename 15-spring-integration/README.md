@@ -1,0 +1,11 @@
+## Интеграция со Spring
+-   ```spring-boot-starter-data-jpa``` (подключение Hibernate как JPA-провайдера в Spring Boot) - автоконфигурация `EntityManagerFactory`, `TransactionManager`, `DataSource`; Hibernate — провайдер по умолчанию
+-   ```JpaRepository<User, Long>``` (готовый репозиторий с CRUD и пагинацией, делегирующий вызовы EntityManager) - Spring Data генерирует реализацию; `save()`, `findById()`, `findAll()`, `deleteById()` — из коробки
+-   ```@PersistenceContext``` (внедрение EntityManager, управляемого контейнером Spring) - `private EntityManager em;` — потокобезопасный прокси; транзакция и жизненный цикл управляются Spring
+-   ```LocalContainerEntityManagerFactoryBean``` (ручная настройка EntityManagerFactory в Spring-конфигурации) - указание DataSource, пакетов для сканирования, свойств Hibernate; Spring Boot настраивает автоматически
+-   ```JpaTransactionManager``` (менеджер транзакций, связывающий Session с текущим потоком) - Spring Boot создаёт автоматически; `@Transactional` — декларативное управление через AOP
+-   ```@Transactional``` (декларативное управление транзакциями через Spring AOP) - создаёт Session, начинает транзакцию, коммитит или откатывает; `readOnly = true` — оптимизация для запросов чтения
+-   ```Open Session in View (OSIV)``` (шаблон, держащий Session открытой до конца HTTP-запроса) - `spring.jpa.open-in-view=true` (по умолчанию); позволяет LAZY-загрузку в контроллере; рекомендуется отключать
+-   ```spring.jpa.properties.hibernate.*``` (передача Hibernate-специфичных свойств через Spring конфигурацию) - `spring.jpa.properties.hibernate.jdbc.batch_size=50`; `spring.jpa.properties.hibernate.order_inserts=true`
+-   ```@Query``` (кастомные HQL/SQL запросы в Spring Data репозиториях) - `@Query("SELECT u FROM User u WHERE u.email = :email")`; `nativeQuery = true` — для SQL; `@Modifying` — для UPDATE/DELETE
+-   ```Auditing (@CreatedDate, @LastModifiedDate)``` (автоматическое заполнение дат создания и изменения через Spring Data) - `@EnableJpaAuditing`; `@EntityListeners(AuditingEntityListener.class)` на сущности; `@CreatedBy` — с `AuditorAware`

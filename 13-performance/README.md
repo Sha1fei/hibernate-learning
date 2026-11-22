@@ -1,0 +1,12 @@
+## Производительность
+-   ```Batch Insert``` (массовая вставка записей пакетами для снижения количества SQL-операций) - `hibernate.jdbc.batch_size=50`; `session.flush()` + `session.clear()` каждые N записей; не работает с `IDENTITY` стратегией
+-   ```Batch Update``` (массовое обновление записей пакетами) - `hibernate.order_updates=true` — группировка UPDATE по таблицам; `hibernate.jdbc.batch_versioned_data=true` — батчинг версионированных сущностей
+-   ```@DynamicInsert``` (генерация INSERT только с не-null полями) - Hibernate-специфичная; полезно для таблиц с DEFAULT значениями в колонках; каждый INSERT уникален → не кэшируется PreparedStatement
+-   ```@DynamicUpdate``` (генерация UPDATE только с изменёнными полями) - снижает объём передаваемых данных; полезно для таблиц с большим количеством колонок
+-   ```StatelessSession``` (облегчённая сессия без кэша L1 и dirty checking для массовых операций) - `sessionFactory.openStatelessSession()`; `insert()`, `update()`, `delete()` — без кэширования и каскадов
+-   ```DTO проекции``` (загрузка только нужных полей вместо полных сущностей) - `SELECT NEW UserDTO(u.name, u.email) FROM User u`; экономит память и снижает нагрузку на сеть
+-   ```@Immutable``` (пометка сущности как неизменяемой, отключающая dirty checking) - Hibernate не создаёт snapshot и не проверяет изменения; производительность для read-only сущностей
+-   ```hibernate.generate_statistics=true``` (сбор статистики: количество запросов, время, кэш hit/miss) - `sessionFactory.getStatistics()`; `getQueryExecutionCount()`, `getSecondLevelCacheHitCount()` — анализ производительности
+-   ```SQL логирование``` (анализ и оптимизация генерируемых SQL-запросов) - `hibernate.show_sql=true`; `logging.level.org.hibernate.SQL=DEBUG`; `logging.level.org.hibernate.orm.jdbc.bind=TRACE` — параметры запросов
+-   ```@Filter / @Where``` (динамическая или статическая фильтрация данных на уровне сущности) - `@Where(clause = "deleted = false")` — мягкое удаление; `@Filter` — динамическое включение/отключение через Session
+-   ```connection pool``` (пул соединений для переиспользования JDBC-подключений) - HikariCP (рекомендуемый); `hibernate.hikari.maximumPoolSize=10`; Spring Boot автоматически настраивает HikariCP

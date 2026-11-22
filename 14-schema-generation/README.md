@@ -1,0 +1,11 @@
+## Генерация схемы
+-   ```hibernate.hbm2ddl.auto=update``` (автоматическое обновление схемы БД по маппингу сущностей при старте) - добавляет новые таблицы и колонки; не удаляет существующие; не для production
+-   ```hibernate.hbm2ddl.auto=create``` (пересоздание схемы при каждом запуске с потерей данных) - удаляет все таблицы и создаёт заново; подходит для ранней разработки
+-   ```hibernate.hbm2ddl.auto=create-drop``` (создание схемы при старте и удаление при остановке) - удобно для тестов; БД полностью чистая между запусками
+-   ```hibernate.hbm2ddl.auto=validate``` (проверка соответствия маппинга и схемы БД без изменений) - рекомендуется для production; выбрасывает исключение при расхождении
+-   ```hibernate.hbm2ddl.auto=none``` (полное отключение автоуправления схемой) - для production с ручными миграциями через Flyway/Liquibase
+-   ```@Index(name = "idx_user_email", columnList = "email")``` (создание индекса для ускорения поиска по полю) - указывается в `@Table(indexes = {...})`; Hibernate генерирует `CREATE INDEX` при создании схемы
+-   ```@UniqueConstraint(columnNames = {"email"})``` (ограничение уникальности на уровне таблицы) - указывается в `@Table(uniqueConstraints = {...})`; альтернатива: `@Column(unique = true)` для одного поля
+-   ```Flyway``` (версионирование и автоматическое применение миграций при старте приложения) - скрипты в `db/migration/V1__create_users.sql`; Spring Boot автоматически запускает; отслеживает применённые миграции
+-   ```Liquibase``` (альтернатива Flyway с поддержкой XML/YAML/JSON формата миграций) - `db/changelog/db.changelog-master.yaml`; поддерживает rollback; генерация diff между моделью и БД
+-   ```javax.persistence.schema-generation.scripts.action=create``` (генерация DDL скриптов в файл без выполнения) - `javax.persistence.schema-generation.scripts.create-target=create.sql` — сохранение SQL в файл для ревью

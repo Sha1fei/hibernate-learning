@@ -1,0 +1,11 @@
+## Транзакции и блокировки
+-   ```@Version``` (оптимистичная блокировка: автоматическое обнаружение конфликтов при параллельном обновлении) - поле `int`/`long`/`Timestamp`; Hibernate добавляет `WHERE version = ?` в UPDATE; при конфликте — `OptimisticLockException`
+-   ```OptimisticLockException``` (исключение при попытке обновить уже изменённую другим пользователем запись) - решение: перечитать сущность, показать пользователю конфликт, повторить операцию
+-   ```@OptimisticLocking(type = OptimisticLockType.DIRTY)``` (оптимистичная блокировка только по изменённым полям без колонки версии) - Hibernate проверяет только изменённые поля в WHERE; не требует `@Version`; Hibernate-специфичная
+-   ```LockModeType.PESSIMISTIC_WRITE``` (блокировка записи в БД до конца транзакции, предотвращая параллельное чтение/изменение) - `em.find(User.class, id, LockModeType.PESSIMISTIC_WRITE)` → `SELECT ... FOR UPDATE`
+-   ```LockModeType.PESSIMISTIC_READ``` (разделяемая блокировка: запись заблокирована для изменения, но доступна для чтения) - `SELECT ... FOR SHARE`; другие транзакции могут читать, но не изменять
+-   ```Isolation Levels``` (уровни изоляции транзакций, определяющие видимость незакоммиченных данных) - `READ_UNCOMMITTED` → `READ_COMMITTED` → `REPEATABLE_READ` → `SERIALIZABLE`; настраивается на уровне БД или транзакции
+-   ```Dirty Read``` (чтение незакоммиченных данных другой транзакции) - возможно при `READ_UNCOMMITTED`; исключается при `READ_COMMITTED` и выше
+-   ```Non-Repeatable Read``` (повторное чтение той же строки возвращает другие данные) - возможно при `READ_COMMITTED`; исключается при `REPEATABLE_READ` и выше
+-   ```Phantom Read``` (повторный запрос возвращает новые строки, добавленные другой транзакцией) - возможно при `REPEATABLE_READ`; исключается при `SERIALIZABLE`
+-   ```@Lock(LockModeType.PESSIMISTIC_WRITE)``` (пессимистичная блокировка на уровне Spring Data метода репозитория) - аннотация на методе `JpaRepository`; добавляет `FOR UPDATE` к сгенерированному запросу

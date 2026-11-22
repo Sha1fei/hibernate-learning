@@ -1,0 +1,11 @@
+## Hibernate Core
+-   ```SessionFactory``` (центральная фабрика для создания сессий, создаётся один раз на приложение) - потокобезопасный объект; конфигурируется через `hibernate.cfg.xml` или `persistence.xml`; тяжёлый — один на приложение
+-   ```Session``` (основной интерфейс для работы с БД: сохранение, чтение, обновление, удаление) - обёртка над JDBC Connection; не потокобезопасна; содержит кэш первого уровня; `session.get()`, `session.save()`
+-   ```EntityManagerFactory``` (JPA-аналог SessionFactory для стандартизированного доступа) - стандарт JPA; `Persistence.createEntityManagerFactory("unit-name")`; Hibernate реализует через `SessionFactory`
+-   ```EntityManager``` (JPA-аналог Session для CRUD и запросов) - стандарт JPA; `em.persist()`, `em.find()`, `em.merge()`, `em.remove()`; Hibernate реализует через `Session`
+-   ```Transaction``` (управление границами транзакции: начало, коммит, откат) - `session.beginTransaction()`; `transaction.commit()` / `transaction.rollback()`; каждая операция записи должна быть в транзакции
+-   ```Configuration``` (программная настройка Hibernate: источник данных, маппинги, свойства) - `new Configuration().configure().addAnnotatedClass(User.class).buildSessionFactory()`
+-   ```hibernate.cfg.xml``` (XML-файл конфигурации с параметрами подключения и настройками) - содержит `hibernate.connection.url`, `hibernate.dialect`, `hibernate.show_sql`, `hibernate.hbm2ddl.auto`
+-   ```persistence.xml``` (стандартный JPA-файл конфигурации persistence unit) - располагается в `META-INF/persistence.xml`; определяет `persistence-unit` с провайдером Hibernate
+-   ```hibernate.dialect``` (указание диалекта SQL для конкретной СУБД) - `org.hibernate.dialect.PostgreSQLDialect`, `MySQLDialect`, `H2Dialect`; определяет генерацию SQL под конкретную БД
+-   ```hibernate.show_sql=true``` (вывод генерируемых SQL-запросов в консоль для отладки) - показывает SQL в логах; `hibernate.format_sql=true` - форматирование; `hibernate.use_sql_comments=true` - комментарии

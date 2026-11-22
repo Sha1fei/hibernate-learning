@@ -1,0 +1,11 @@
+## Кэширование
+-   ```Кэш первого уровня (L1)``` (автоматический кэш на уровне Session, избегающий повторных запросов) - включён всегда; один и тот же объект по ID возвращается из кэша; `session.get(User.class, 1L)` — второй вызов не идёт в БД
+-   ```Кэш второго уровня (L2)``` (разделяемый кэш на уровне SessionFactory для всех сессий) - отключён по умолчанию; `hibernate.cache.use_second_level_cache=true`; требует провайдера (EhCache, Caffeine, Redis)
+-   ```@Cacheable``` (пометка сущности как кэшируемой в L2 кэше) - JPA аннотация; `@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)` — Hibernate-специфичная настройка стратегии
+-   ```CacheConcurrencyStrategy.READ_ONLY``` (кэширование неизменяемых справочных данных) - максимальная производительность; для данных, которые никогда не обновляются (страны, валюты)
+-   ```CacheConcurrencyStrategy.READ_WRITE``` (кэширование часто читаемых данных с редкими обновлениями) - использует soft-lock при обновлении; гарантирует консистентность; подходит для большинства случаев
+-   ```CacheConcurrencyStrategy.NONSTRICT_READ_WRITE``` (кэширование с допустимой кратковременной неконсистентностью) - без блокировок; возможно чтение устаревших данных в окне обновления; выше производительность
+-   ```Query Cache``` (кэширование результатов HQL/Criteria запросов) - `hibernate.cache.use_query_cache=true`; `query.setCacheable(true)`; хранит ID сущностей → работает вместе с L2 кэшем
+-   ```EhCache / Caffeine``` (in-process провайдеры кэша для одноузловых приложений) - `hibernate-jcache` + EhCache 3 или Caffeine; настройка TTL, размера через XML или программно
+-   ```Redis / Hazelcast``` (распределённые провайдеры кэша для кластерных приложений) - `hibernate-redis` или через JCache; данные доступны всем узлам кластера; добавляет сетевую задержку
+-   ```cache.evictEntityData(User.class)``` (ручная очистка кэша при прямых SQL-операциях) - `sessionFactory.getCache().evictEntityData(User.class, userId)` — по ID; необходимо при native SQL UPDATE/DELETE
