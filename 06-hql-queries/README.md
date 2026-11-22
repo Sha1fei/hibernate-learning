@@ -1,11 +1,11 @@
-## HQL запросы
--   ```HQL (Hibernate Query Language)``` (объектно-ориентированный язык запросов, работающий с сущностями, а не таблицами) - `FROM User u WHERE u.name = :name`; оперирует именами классов и полей, не таблиц и колонок
--   ```JPQL (Java Persistence Query Language)``` (стандартизированное подмножество HQL, переносимое между JPA-провайдерами) - синтаксис почти идентичен HQL; `SELECT u FROM User u WHERE u.age > 18`
--   ```session.createQuery("FROM User", User.class)``` (создание типизированного запроса через Session) - `TypedQuery<User>` — типобезопасный результат; `.getResultList()` — список; `.getSingleResult()` — один результат
--   ```setParameter("name", value)``` (подстановка именованных параметров для защиты от SQL-инъекций) - `:name` — именованный параметр; `?1` — позиционный параметр; никогда не конкатенировать значения в строку запроса
--   ```@NamedQuery(name = "User.findByEmail", query = "...")``` (предкомпилированный запрос для повторного использования и валидации при старте) - определяется на уровне сущности; вызов: `session.createNamedQuery("User.findByEmail", User.class)`
--   ```@NamedNativeQuery``` (именованный SQL-запрос для сложных случаев, не покрываемых HQL) - `@NamedNativeQuery(name = "User.findActive", query = "SELECT * FROM users WHERE active = 1", resultClass = User.class)`
--   ```JOIN FETCH u.orders``` (загрузка связанных сущностей одним запросом, избегая N+1) - `SELECT u FROM User u JOIN FETCH u.orders`; загружает коллекцию в том же SELECT; решает проблему LazyInitializationException
--   ```SELECT NEW com.example.UserDTO(u.name, u.email)``` (проекция результата в DTO без загрузки полной сущности) - конструктор DTO должен совпадать по параметрам; экономит память и трафик
--   ```Pagination``` (постраничная выдача результатов запроса) - `query.setFirstResult(0)` — смещение; `query.setMaxResults(10)` — лимит; Hibernate генерирует `LIMIT/OFFSET` или аналог для диалекта
--   ```Bulk UPDATE / DELETE``` (массовое обновление или удаление записей без загрузки сущностей) - `UPDATE User u SET u.active = false WHERE u.lastLogin < :date`; не затрагивает кэш первого уровня — делать `clear()` после
+## HQL и JPQL запросы
+-   ```HQL (Hibernate Query Language)``` (объектно-ориентированный диалект SQL, оперирующий классами и свойствами) - независим от СУБД; транслируется в нативный SQL через SQM парсер Hibernate 6
+-   ```JOIN FETCH``` (жадная загрузка связанных коллекций или объектов одним SQL JOIN запросом) - `SELECT u FROM User u JOIN FETCH u.orders`; главный инструмент устранения проблемы N+1
+-   ```Опасность JOIN FETCH с пагинацией (firstResult / maxResults)``` (предотвращение выборки всей таблицы в память JVM) - при пагинации коллекции Hibernate выводит предупреждение HHH000104 и выполняет пагинацию в оперативной памяти Java; решение: двухфазный запрос по ID
+-   ```SELECT NEW com.example.UserDTO(...)``` (проекция результатов выборки напрямую в Java DTO или Record) - загружает только нужные колонки, не загружает сущности в Persistence Context, снижая расход RAM
+-   ```Оконные функции (Window Functions) в Hibernate 6``` (выполнение аналитических SQL-функций прямо в HQL) - `ROW_NUMBER() OVER(PARTITION BY u.deptId ORDER BY u.salary DESC)`, `RANK()`, `DENSE_RANK()`
+-   ```Common Table Expressions (CTE / WITH clause) в Hibernate 6``` (построение сложных и рекурсивных подзапросов в HQL) - нативная поддержка конструкции `WITH cte AS (...) SELECT ...`
+-   ```Именованные параметры (:name)``` (безопасная передача аргументов с защитой от SQL Injection) - `query.setParameter("name", val)`; позиционные параметры `?1` также поддерживаются
+-   ```@NamedQuery & @NamedNativeQuery``` (предварительно скомпилированные и валидируемые на этапе старта запросы) - объявляются над классами сущностей; синтаксические ошибки выявляются при запуске приложения
+-   ```Массовые операции (Bulk UPDATE / DELETE)``` (выполнение прямых изменений в таблице без загрузки сущностей в память) - `UPDATE User u SET u.active = false WHERE u.lastLogin < :date`; обходит кэш L1, требует вызова `session.clear()`
+-   ```HQL с нативными функциями СУБД (function())``` (вызов специфичных функций базы данных из HQL) - `SELECT function('jsonb_extract_path_text', u.data, 'email') FROM User u`

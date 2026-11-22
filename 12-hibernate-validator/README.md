@@ -1,12 +1,8 @@
 ## Hibernate Validator
--   ```@NotNull``` (запрет null-значений для обязательных полей) - `javax.validation.constraints`; проверяется при persist/merge если включена валидация
--   ```@NotBlank``` (проверка что строка заполнена и содержит не только пробелы) - Hibernate Validator специфичная; для `String`; строже чем `@NotNull` и `@NotEmpty`
--   ```@Size(min = 2, max = 100)``` (ограничение длины строки или размера коллекции) - работает для `String`, `Collection`, `Map`, `Array`
--   ```@Min(0) @Max(150)``` (ограничение допустимого диапазона числовых значений) - для `int`, `long`, `BigDecimal`; `@DecimalMin` / `@DecimalMax` — для строковых представлений чисел
--   ```@Email``` (проверка корректности формата email-адреса) - по умолчанию мягкая проверка; `@Email(regexp = "...")` — ужесточение через regex
--   ```@Pattern(regexp = "^[A-Z]{2,3}$")``` (валидация строки по регулярному выражению) - `message = "Invalid format"` — кастомное сообщение об ошибке
--   ```@Past / @Future / @PastOrPresent / @FutureOrPresent``` (проверка что дата в прошлом или будущем) - работает с `LocalDate`, `LocalDateTime`, `Date`, `Instant`
--   ```@Valid``` (каскадная валидация вложенных объектов) - на поле сущности или параметре метода; Hibernate Validator рекурсивно валидирует вложенный объект
--   ```Кастомный валидатор``` (создание собственного правила валидации через аннотацию) - аннотация с `@Constraint(validatedBy = MyValidator.class)`; класс реализует `ConstraintValidator<MyAnnotation, String>`
--   ```Группы валидации``` (разные наборы проверок для разных операций: создание, обновление) - интерфейсы-маркеры: `interface OnCreate {}`; `@NotNull(groups = OnCreate.class)`; `@Validated(OnCreate.class)` в контроллере
--   ```javax.validation.groups.Default``` (группа по умолчанию для всех валидаций без явной группы) - если группа не указана — используется `Default`; можно комбинировать: `@Validated({Default.class, OnCreate.class})`
+-   ```Встроенные ограничения Bean Validation (JSR 380)``` (базовая валидация свойств сущностей) - `@NotNull`, `@NotBlank`, `@NotEmpty`, `@Size`, `@Min`, `@Max`, `@Email`, `@Positive`, `@Past`, `@Future`
+-   ```Кастомные аннотации валидации (@Constraint)``` (создание собственных бизнес-правил валидации) - аннотация с `@Constraint(validatedBy = CheckInnValidator.class)` и класс, реализующий `ConstraintValidator<CheckInn, String>`
+-   ```Кросс-полевая валидация на уровне класса (Class-level constraint)``` (проверка согласованности нескольких полей объекта) - валидатор вешается на сам класс сущности (например, `startDate < endDate` или «пароль совпадает с подтверждением»)
+-   ```Группы проверок (Validation Groups)``` (разные правила валидации для разных сценариев) - интерфейсы-маркеры `OnCreate`, `OnUpdate`; аннотация `@NotNull(groups = OnCreate.class)`; в контроллере `@Validated(OnCreate.class)`
+-   ```Group Sequence (@GroupSequence)``` (управление строгим порядком выполнения валидаций) - не выполнять тяжелые проверки в БД, если упали базовые дешевые проверки формата
+-   ```Интеграция с жизненным циклом Hibernate (Pre-persist / Pre-update)``` (автоматическая валидация сущностей перед сохранением в БД) - Hibernate Validator автоматически вызывается перед операциями записи, выбрасывая `ConstraintViolationException`
+-   ```Локализация сообщений об ошибках (ValidationMessages.properties)``` (кастомизация текстов ошибок под язык пользователя) - шаблоны сообщений с интерполяцией параметров: `{min}`, `{max}`

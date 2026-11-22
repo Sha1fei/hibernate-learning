@@ -1,12 +1,9 @@
-## Производительность
--   ```Batch Insert``` (массовая вставка записей пакетами для снижения количества SQL-операций) - `hibernate.jdbc.batch_size=50`; `session.flush()` + `session.clear()` каждые N записей; не работает с `IDENTITY` стратегией
--   ```Batch Update``` (массовое обновление записей пакетами) - `hibernate.order_updates=true` — группировка UPDATE по таблицам; `hibernate.jdbc.batch_versioned_data=true` — батчинг версионированных сущностей
--   ```@DynamicInsert``` (генерация INSERT только с не-null полями) - Hibernate-специфичная; полезно для таблиц с DEFAULT значениями в колонках; каждый INSERT уникален → не кэшируется PreparedStatement
--   ```@DynamicUpdate``` (генерация UPDATE только с изменёнными полями) - снижает объём передаваемых данных; полезно для таблиц с большим количеством колонок
--   ```StatelessSession``` (облегчённая сессия без кэша L1 и dirty checking для массовых операций) - `sessionFactory.openStatelessSession()`; `insert()`, `update()`, `delete()` — без кэширования и каскадов
--   ```DTO проекции``` (загрузка только нужных полей вместо полных сущностей) - `SELECT NEW UserDTO(u.name, u.email) FROM User u`; экономит память и снижает нагрузку на сеть
--   ```@Immutable``` (пометка сущности как неизменяемой, отключающая dirty checking) - Hibernate не создаёт snapshot и не проверяет изменения; производительность для read-only сущностей
--   ```hibernate.generate_statistics=true``` (сбор статистики: количество запросов, время, кэш hit/miss) - `sessionFactory.getStatistics()`; `getQueryExecutionCount()`, `getSecondLevelCacheHitCount()` — анализ производительности
--   ```SQL логирование``` (анализ и оптимизация генерируемых SQL-запросов) - `hibernate.show_sql=true`; `logging.level.org.hibernate.SQL=DEBUG`; `logging.level.org.hibernate.orm.jdbc.bind=TRACE` — параметры запросов
--   ```@Filter / @Where``` (динамическая или статическая фильтрация данных на уровне сущности) - `@Where(clause = "deleted = false")` — мягкое удаление; `@Filter` — динамическое включение/отключение через Session
--   ```connection pool``` (пул соединений для переиспользования JDBC-подключений) - HikariCP (рекомендуемый); `hibernate.hikari.maximumPoolSize=10`; Spring Boot автоматически настраивает HikariCP
+## Производительность и батчинг
+-   ```JDBC Batching (hibernate.jdbc.batch_size=50)``` (объединение множества операций INSERT/UPDATE в один сетевой JDBC пакет) - снижает количество сетевых раунд-трипов (round-trips) к базе данных в десятки раз
+-   ```hibernate.order_inserts & hibernate.order_updates = true``` (сортировка SQL операций для сохранения батча) - группирует одинаковые запросы вместе, предотвращая преждевременный сброс батча из-за чередования сущностей
+-   ```Несовместимость JDBC Batching с GenerationType.IDENTITY``` (главная ловушка производительности) - при IDENTITY Hibernate вынужден делать одиночный INSERT на каждую запись для получения ID
+-   ```StatelessSession``` (ультрабыстрая облегченная сессия для миграций и ETL) - `sessionFactory.openStatelessSession()`; полностью отключен L1 кэш, dirty checking, перехватчики и каскады
+-   ```StatementInspector (Перехватчик SQL для профилирования)``` (логирование времени выполнения и анализ реального SQL) - перехват каждого запроса до отправки в JDBC драйвер
+-   ```hibernate.generate_statistics=true``` (сбор глубокой метрики производительности) - отслеживает время подготовки запросов, количество открытых сессий, попадания в кэш и самые медленные запросы
+-   ```HikariCP конфигурация (Пул соединений)``` (правильный сайзинг пула под количество ядер процессора БД) - формула пула соединений: `connections = ((cpu_core_count * 2) + effective_spindle_count)`
+-   ```Логирование привязки параметров (org.hibernate.orm.jdbc.bind=TRACE)``` (просмотр реальных значений параметров в подготовленных запросах) - позволяет скопировать готовый SQL для запуска через EXPLAIN ANALYZE

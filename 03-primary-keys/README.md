@@ -1,11 +1,11 @@
-## Первичные ключи
--   ```@Id``` (определение поля как первичного ключа сущности) - обязательная аннотация для каждой `@Entity`; поддерживает `Long`, `Integer`, `UUID`, `String`
--   ```@GeneratedValue(strategy = GenerationType.IDENTITY)``` (автоинкремент на стороне БД) - простой способ; не поддерживает JDBC batch insert (Hibernate не может узнать ID до INSERT)
--   ```@GeneratedValue(strategy = GenerationType.SEQUENCE)``` (генерация ID через database sequence) - рекомендуемая стратегия; поддерживает batch insert; `@SequenceGenerator` — настройка имени и allocationSize
--   ```@GeneratedValue(strategy = GenerationType.TABLE)``` (генерация ID через отдельную таблицу-счётчик) - переносимость между БД, но низкая производительность из-за блокировки таблицы
--   ```@GeneratedValue(strategy = GenerationType.AUTO)``` (автоматический выбор стратегии Hibernate) - Hibernate выбирает стратегию на основе диалекта БД; может выбрать TABLE — лучше указывать явно
--   ```@GeneratedValue(strategy = GenerationType.UUID)``` (генерация UUID как первичного ключа) - Hibernate 6+; тип поля `UUID`; удобно для распределённых систем без координации ID
--   ```@SequenceGenerator(name = "user_seq", sequenceName = "user_sequence", allocationSize = 50)``` (настройка sequence для оптимизации batch-операций) - `allocationSize` — количество ID, резервируемых за раз; больше значение = меньше обращений к БД
--   ```@EmbeddedId``` (составной первичный ключ через встраиваемый класс) - класс ключа помечается `@Embeddable`; должен реализовать `Serializable`, `equals()`, `hashCode()`
--   ```@IdClass(OrderItemId.class)``` (составной первичный ключ через внешний класс) - альтернатива `@EmbeddedId`; поля ключа дублируются в сущности с `@Id`
--   ```@NaturalId``` (бизнес-ключ для поиска сущности по уникальному натуральному идентификатору) - Hibernate-специфичная аннотация; `session.byNaturalId(User.class).using("email", email).load()`; кэшируется
+## Первичные ключи и оптимизаторы
+-   ```@Id``` (объявление свойства первичным ключом сущности) - обязательное поле; рекомендуется использовать ссылочные типы (`Long`, `UUID`) вместо примитивов для различения `null` (transient) и `0`
+-   ```GenerationType.IDENTITY``` (автоинкрементные колонки СУБД: SERIAL, AUTO_INCREMENT) - отключает JDBC Batch Insert, так как Hibernate обязан выполнить мгновенный INSERT для получения сгенерированного ID
+-   ```GenerationType.SEQUENCE``` (генерация идентификаторов через независимый объект последовательности в БД) - рекомендуемый промышленный подход; полностью поддерживает пакетную вставку (Batching)
+-   ```@SequenceGenerator с pooled-lo оптимизатором``` (аллокация пула идентификаторов в памяти приложения) - параметр `allocationSize = 50`; Hibernate делает один запрос к sequence за 50 вставками, снижая нагрузку на СУБД
+-   ```GenerationType.UUID (Hibernate 6)``` (генерация уникальных UUID идентификаторов) - нативная поддержка генерации UUID v4 (рандомный) или v7 (time-ordered, дружественный к индексам B-Tree)
+-   ```TSID (Time-Sorted Unique Identifier)``` (современная альтернатива UUID на основе Snowflake ID) - 64-битный Long, отсортированный по времени; превосходит UUID по производительности B-Tree индексов
+-   ```@EmbeddedId``` (составной первичный ключ через отдельный встраиваемый класс) - класс ключа обязан реализовывать `Serializable`, содержать корректные `equals()` и `hashCode()`
+-   ```@IdClass``` (альтернативный способ маппинга составного ключа) - поля первичного ключа объявляются напрямую в сущности, а внешний класс описывает их комбинацию
+-   ```@NaturalId``` (декларация естественного бизнес-ключа: email, ИНН, SKU) - Hibernate предоставляет быстрый API для поиска и кэширования: `session.byNaturalId(User.class).using("email", email).load()`
+-   ```@MapsId (Foreign Key как Primary Key)``` (маппинг связи OneToOne, где дочерняя таблица использует ID родителя) - устраняет необходимость генерации отдельного ключа для дочерней таблицы

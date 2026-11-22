@@ -1,0 +1,7 @@
+## Мягкое удаление и фильтры
+-   ```@SoftDelete в Hibernate 6.4+ (Нативная поддержка мягкого удаления)``` (декларативное мягкое удаление без написания ручных SQL запросов) - автоматически меняет логику: вместо `DELETE` делает `UPDATE ... SET deleted = true`, а во все SELECT добавляет фильтр `WHERE deleted = false`
+-   ```@SQLDelete (Переопределение нативного SQL для удаления)``` (классический способ реализации мягкого удаления) - `@SQLDelete(sql = "UPDATE users SET is_deleted = true, deleted_at = NOW() WHERE id = ?")`
+-   ```@SQLRestriction (Hibernate 6+ замена @Where)``` (автоматическое наложение условия фильтрации на все запросы к сущности) - `@SQLRestriction("is_deleted = false")`; заменяет устаревшую аннотацию `@Where`
+-   ```@FilterDef & @Filter (Параметризованные динамические фильтры)``` (включение и отключение условий фильтрации на уровне сессии) - объявление: `@FilterDef(name = "activeFilter", parameters = @ParamDef(name = "isActive", type = Boolean.class))`
+-   ```session.enableFilter("activeFilter").setParameter("isActive", true)``` (программная активация фильтра для конкретного запроса или транзакции) - удобно для архивации, мультитенантности или фильтрации по регионам
+-   ```Мягкое удаление и уникальные ограничения в БД (Уникальные индексы)``` (архитектурное решение проблемы коллизий уникальности) - создание частичного индекса в PostgreSQL: `CREATE UNIQUE INDEX idx_user_email ON users(email) WHERE is_deleted = false`

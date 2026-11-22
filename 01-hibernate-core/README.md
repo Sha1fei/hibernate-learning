@@ -1,11 +1,12 @@
 ## Hibernate Core
--   ```SessionFactory``` (центральная фабрика для создания сессий, создаётся один раз на приложение) - потокобезопасный объект; конфигурируется через `hibernate.cfg.xml` или `persistence.xml`; тяжёлый — один на приложение
--   ```Session``` (основной интерфейс для работы с БД: сохранение, чтение, обновление, удаление) - обёртка над JDBC Connection; не потокобезопасна; содержит кэш первого уровня; `session.get()`, `session.save()`
--   ```EntityManagerFactory``` (JPA-аналог SessionFactory для стандартизированного доступа) - стандарт JPA; `Persistence.createEntityManagerFactory("unit-name")`; Hibernate реализует через `SessionFactory`
--   ```EntityManager``` (JPA-аналог Session для CRUD и запросов) - стандарт JPA; `em.persist()`, `em.find()`, `em.merge()`, `em.remove()`; Hibernate реализует через `Session`
--   ```Transaction``` (управление границами транзакции: начало, коммит, откат) - `session.beginTransaction()`; `transaction.commit()` / `transaction.rollback()`; каждая операция записи должна быть в транзакции
--   ```Configuration``` (программная настройка Hibernate: источник данных, маппинги, свойства) - `new Configuration().configure().addAnnotatedClass(User.class).buildSessionFactory()`
--   ```hibernate.cfg.xml``` (XML-файл конфигурации с параметрами подключения и настройками) - содержит `hibernate.connection.url`, `hibernate.dialect`, `hibernate.show_sql`, `hibernate.hbm2ddl.auto`
--   ```persistence.xml``` (стандартный JPA-файл конфигурации persistence unit) - располагается в `META-INF/persistence.xml`; определяет `persistence-unit` с провайдером Hibernate
--   ```hibernate.dialect``` (указание диалекта SQL для конкретной СУБД) - `org.hibernate.dialect.PostgreSQLDialect`, `MySQLDialect`, `H2Dialect`; определяет генерацию SQL под конкретную БД
--   ```hibernate.show_sql=true``` (вывод генерируемых SQL-запросов в консоль для отладки) - показывает SQL в логах; `hibernate.format_sql=true` - форматирование; `hibernate.use_sql_comments=true` - комментарии
+-   ```SessionFactory``` (центральная потокобезопасная фабрика для создания сессий и управления метаданными) - создаётся один раз на все приложение; компилирует маппинги, держит кэш второго уровня и пул соединений
+-   ```Session``` (основной рабочий интерфейс для взаимодействия с БД в рамках одной операции/потока) - обёртка над JDBC Connection; непотокобезопасна; хранит Persistence Context и кэш первого уровня
+-   ```EntityManagerFactory & EntityManager``` (стандартизированные интерфейсы Jakarta JPA, реализуемые Hibernate) - `EntityManagerFactory` делегирует `SessionFactory`, а `EntityManager` оборачивает `Session` (`em.unwrap(Session.class)`)
+-   ```StandardServiceRegistry``` (реестр системных сервисов Hibernate: пул соединений, диалект, кэш) - строится через `StandardServiceRegistryBuilder`; управляет жизненным циклом внутренних компонентов
+-   ```MetadataSources & Metadata``` (объектное представление метаданных всех сущностей до построения SessionFactory) - валидирует аннотации классов и строит граф сущностей
+-   ```Dialect``` (адаптер SQL-генерации под конкретную СУБД) - в Hibernate 6 диалекты определяются автоматически по строке подключения через JDBC DatabaseMetaData (`PostgreSQLDialect`, `MySQLDialect`)
+-   ```PhysicalNamingStrategy``` (преобразование имён сущностей и полей в реальные имена таблиц и колонок БД) - преобразует camelCase в snake_case (`CamelCaseToUnderscoresNamingStrategy`)
+-   ```ImplicitNamingStrategy``` (генерация имён таблиц связей, внешних ключей и индексов, если они не заданы явно) - обеспечивает единообразие имен constraint'ов в схеме
+-   ```Semantic Query Model (SQM) в Hibernate 6``` (новый внутренний движок парсинга HQL/Criteria запросов) - переводит HQL напрямую в абстрактное дерево синтаксиса, устраняя ограничения старого Antlr2 парсера
+-   ```Transaction API (session.beginTransaction())``` (демаркация границ локальных транзакций JDBC) - гарантирует атомарность выполнения операций; `transaction.commit()` автоматически триггерит `session.flush()`
+-   ```hibernate.show_sql & format_sql``` (вывод сгенерированного SQL в консоль логов с форматированием) - базовый инструмент быстрой визуальной отладки запросов на этапе разработки
